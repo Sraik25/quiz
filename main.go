@@ -4,8 +4,8 @@ import (
 	"encoding/csv"
 	"flag"
 	"fmt"
+	"github.com/Sraik25/quiz/utils"
 	"os"
-	"strings"
 )
 
 func main() {
@@ -15,7 +15,7 @@ func main() {
 	file, err := os.Open(*csvFilename)
 
 	if err != nil {
-		exit(fmt.Sprintf("Failed to open the CSV file: %s \n", *csvFilename))
+		utils.Exit(fmt.Sprintf("Failed to open the CSV file: %s \n", *csvFilename))
 		os.Exit(1)
 	}
 
@@ -24,44 +24,21 @@ func main() {
 	lines, err := r.ReadAll()
 
 	if err != nil {
-		exit("Failed to parse the provided CSV file.")
+		utils.Exit("Failed to parse the provided CSV file.")
 	}
 
-	problems := parseLines(lines)
+	problems := utils.ParseLines(lines)
 	correct := 0
 
 	for i, p := range problems {
-		fmt.Printf("Problem #%d: %s = \n", i+1, p.q)
+		fmt.Printf("Problem #%d: %s = \n", i+1, p.Q)
 		var answer string
 		fmt.Scanf("%s \n", &answer)
 
-		if answer == p.a {
+		if answer == p.A {
 			correct++
 		}
 	}
 
 	fmt.Printf("You scored %d out of %d.\n", correct, len(problems))
-}
-
-func parseLines(lines [][]string) []problem {
-	ret := make([]problem, len(lines))
-
-	for i, line := range lines {
-		ret[i] = problem{
-			q: line[0],
-			a: strings.TrimSpace(line[1]),
-		}
-	}
-
-	return ret
-}
-
-type problem struct {
-	q string
-	a string
-}
-
-func exit(msg string) {
-	fmt.Println(msg)
-	os.Exit(1)
 }
