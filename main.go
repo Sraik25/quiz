@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"github.com/Sraik25/quiz/utils"
 	"os"
+	"time"
 )
 
 func main() {
 	csvFilename := flag.String("csv", "problems.csv", "a csv file in the format of 'question, answer'")
+	timeLimit := flag.Int("limit", 30, "the time limit for the quiz in seconds")
 	flag.Parse()
 
 	file, err := os.Open(*csvFilename)
@@ -28,16 +30,32 @@ func main() {
 	}
 
 	problems := utils.ParseLines(lines)
+
+	timer := time.NewTimer(time.Duration(*timeLimit) * time.Second)
+
 	correct := 0
 
-	for i, p := range problems {
-		fmt.Printf("Problem #%d: %s = \n", i+1, p.Q)
-		var answer string
-		fmt.Scanf("%s \n", &answer)
+problemloop:
 
-		if answer == p.A {
-			correct++
+	for i, p := range problems {
+		fmt.Printf("Problem #%d: %s = ", i+1, p.Q)
+		answerCh := make(chan string)
+		go func() {
+			var answer string
+			fmt.Scanf("%s\n", &answer)
+			answerCh <- answer
+		}()
+
+		select {
+		case <-timer.C:
+			fmt.Println()
+			break problemloop
+		case answer := <-answerCh:
+			if answer == p.A {
+				correct++
+			}
 		}
+
 	}
 
 	fmt.Printf("You scored %d out of %d.\n", correct, len(problems))
